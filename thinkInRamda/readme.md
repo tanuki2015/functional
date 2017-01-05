@@ -98,3 +98,42 @@ const double = x => x * x;
 const operate = compose(double, R.add(1), R.multiply);
 operate(2, 3); // 49
 ```
+
+## 3 partial application
+如何应用多个参数， 使用curry。
+```
+// 一个books对象， 找出特定年份出版的书，打印出书名
+const book0 = {
+  title: "ramda programing",
+  year: 2016,
+  author: "randy",
+};
+const book1 = {
+  title: "html5 programing",
+  year: 2010,
+  author: "randy",
+};
+const books = [book0, book1];
+const year = 2016;
+
+// 在特定book对象中找特定年份的，函数返回Boolean
+const pYear = R.curry((year, book) => book.year === year);
+
+// 为方便后面操作，把year配置项先curry进函数
+const publishedYear = pYear(year);
+
+// 这里有问题，filter被执行了，返回的不是函数，是结果, 明天有时间再改
+// 已经搞定，必须curry后，再组合
+const filterArr = R.curry(filter(publishedYear));
+
+// 把map的配置项，即处理函数先curry
+const mapArr = R.curry(map(book => book.title))
+
+// 组合完函数
+const getTitles = compose(mapArr, filterArr);
+
+// 一顺溜执行
+getTitles(books);
+
+// 今天没时间了，明天再整理
+```
