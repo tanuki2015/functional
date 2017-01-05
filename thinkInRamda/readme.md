@@ -38,3 +38,63 @@ R.reject(even, [1,2,3,4,5,6]);
 R.reduce(R.add, 5, [1,2,3,4])；
 R.reduce(R.multiply, 2, [1,2,3,4])
 ```
+
+## 2 combining functions
+第二篇是几个常用的函数组合的方式
+
+### 简单的结合 complement(补集) 从数组中找到一个奇数
+```
+// 我们已经有了 even
+const even = x => x % 2 === 0;
+// 利用complement找补集
+const odd = R.complement(even);
+R.find(odd, [1,2,3,4,5]);
+```
+
+### both && either 函数间的 与（&&），或（||）
+```
+// 找出birthCountry为美国，或有naturalizationDate, 并且age大于18的有投票权的人
+const person1 = {
+  name: "nicolas",
+  birthCountry: "America",
+  naturalizationDate: 1212,
+  age: 19,
+}
+const person2 = {
+  name: "daqula",
+  birthCountry: "china",
+  naturalizationDate: null,
+  age: 20,
+}
+
+const wasBirthInAmerica = person => person.birthCountry == "America";
+const wasNaturalized = person => Boolean(person.naturalizationDate);
+const isOver18 = person => person.age >= 18;
+
+const isCitizen = R.either(wasBirthInAmerica, wasNaturalized);
+const hasVoteRight = R.both(isCitizen, isOver18);
+
+hasVoteRight(person1); // true
+hasVoteRight(person2) // false
+```
+
+### pipe 按顺序执行多个函数
+```
+// 两个数先相乘，再加上1，再求这个数的平方
+const double = x => x * x;
+
+const operate = pipe(
+  R.multiply,
+  R.add(1),
+  double
+  );
+
+operate(2, 3); // 49
+```
+
+### compose 顺序同pipe相反
+```
+const double = x => x * x;
+const operate = compose(double, R.add(1), R.multiply);
+operate(2, 3); // 49
+```
