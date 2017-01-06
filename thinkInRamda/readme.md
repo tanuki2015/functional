@@ -130,10 +130,52 @@ const filterArr = R.curry(filter(publishedYear));
 const mapArr = R.curry(map(book => book.title))
 
 // 组合完函数
-const getTitles = compose(mapArr, filterArr);
+const titlesForYear = compose(mapArr, filterArr);
 
 // 一顺溜执行
-getTitles(books);
+titlesForYear(books);
 
 // 今天没时间了，明天再整理
 ```
+### 把上面的整理了一下
+跟教程不一样，但我觉得这样更容易理解。
+
+#### 关键的地方是：
+1. compose中的函数都只有一个参数，或者被curry为一个参数
+2. ramda提供的函数都是自动curry，所以filter、map等等都很方便被curry
+```
+// 一个books对象， 找出特定年份出版的书，打印出书名
+const book0 = {
+  title: "ramda programing",
+  year: 2016,
+  author: "randy",
+};
+const book1 = {
+  title: "html5 programing",
+  year: 2010,
+  author: "randy",
+};
+const books = [book0, book1];
+const year = 2016;
+
+// 在特定book对象中找特定年份的，函数返回Boolean
+const isTheYear = R.curry((year, book) => book.year === year);
+
+// 为方便后面操作，把year配置项先curry进函数
+const isPublishedYear = isTheYear(year);
+
+// 把处理函数curry进filter，让filter找到特定年份的对象数组
+const getYearsArray = filter(isPublishedYear);
+
+// 把处理函数curry进map
+const getTitles = map(book => book.title)
+
+// 组合这两个函数
+const titlesForYear = compose(getTitles, getYearsArray);
+
+titlesForYear(books);
+```
+根据函数式可替换的原则，也可以把getTitles和getYears直接代入
+`const titlesForYear = compose(map(book => book.title), filter(isPublishedYear));
+`
+这种不需要中间变量，但看起来不那么直观.
