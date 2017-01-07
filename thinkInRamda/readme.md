@@ -9,13 +9,27 @@ http://randycoulman.com/blog/2016/05/24/thinking-in-ramda-getting-started/
 ## 1 getting started
 第一篇比较简单，基本概念和 forEach, map, filter, reject, find, reduce的基本用法。
 
-### forEach  返回数组中各项 [1,2,3,4,5]
+### 关于list类型
+list是函数式语言的中一种重要的数据类型，可以参看这篇文章：[《编程机制探析》第十七章 函数式编程](http://buaawhl.iteye.com/blog/1160429)
+
+目前简单的当做array来理解就可以了。
+
+### forEach  
+接受两个参数，第一个是函数，第二个是list，返回值是输入的list
+
+例：返回数组中各项 [1,2,3,4,5]
 `R.forEach(item => console.log(item), [1,2,3,4,5])`
 
-### map 数组中各项乘以2
+### map
+参数同forEach一样，返回处理后的结果list
+
+例：数组中各项乘以2
 `R.map(x => x * 2, [1,2,3,4,5])`
 
-### filter 找出数组中的偶数
+### filter
+参数同上， 返回结果为true的list
+
+例：找出数组中的偶数
 ```
 R.filter(x => x % 2 ===0, [1,2,3,4,5,6])
 // 或者这样
@@ -23,17 +37,22 @@ const even = x => x % 2 === 0;
 R.filter(even, [1,2,3,4,5]);
 ```
 
-### reject 与filter条件相反 找出奇数
+### reject
+反转filter的筛选条件
+
+例：与filter条件相反 找出奇数
 ```
 R.reject(x => x % 2 ===0, [1,2,3,4,5,6])
 // or...
 R.reject(even, [1,2,3,4,5,6]);
 ```
 
-### find 找第一个符合条件的内容
+### find
+例：找第一个符合条件的内容
 `R.find(even, [1,2,3,4,5])`
 
-### reduce 归并 累加数组内容 乘积也行
+### reduce 归并
+例：累加数组内容 乘积也行
 ```
 R.reduce(R.add, 5, [1,2,3,4])；
 R.reduce(R.multiply, 2, [1,2,3,4])
@@ -42,7 +61,8 @@ R.reduce(R.multiply, 2, [1,2,3,4])
 ## 2 combining functions
 第二篇是几个常用的函数组合的方式
 
-### 简单的结合 complement(补集) 从数组中找到一个奇数
+### 简单的结合 complement(补集)
+例：从数组中找到一个奇数
 ```
 // 我们已经有了 even
 const even = x => x % 2 === 0;
@@ -51,7 +71,7 @@ const odd = R.complement(even);
 R.find(odd, [1,2,3,4,5]);
 ```
 
-### both && either 函数间的 与（&&），或（||）
+### both && either 用在函数上的 与（&&），或（||）
 ```
 // 找出birthCountry为美国，或有naturalizationDate, 并且age大于18的有投票权的人
 const person1 = {
@@ -100,7 +120,7 @@ operate(2, 3); // 49
 ```
 
 ## 3 partial application
-如何应用多个参数， 使用curry。
+如何应用多个参数， 使用curry就够了， partial和 partialRight省略。
 ```
 // 一个books对象， 找出特定年份出版的书，打印出书名
 const book0 = {
@@ -178,4 +198,140 @@ titlesForYear(books);
 根据函数式可替换的原则，也可以把getTitles和getYears直接代入
 `const titlesForYear = compose(map(book => book.title), filter(isPublishedYear));
 `
-这种不需要中间变量，但看起来不那么直观.
+这种不需要中间变量，语义化不好，但直观的表示出这个程序的组成.
+1. 需要从数组中挑出特定的内容，用filter(...)。
+2. filter需要一个判断是否满足条件的函数，作为filter的第一个参数，于是又有isPublishedYear.
+3. isPublishedYear是isTheYear这个函数curry了参数year后的函数。
+4. 根据上面上步拿到结果数组后，map出title，就有getTitles.
+
+思路梳理清晰后发现还是比较好理解的，整个过程跟我自己的思路还是很契合的。也就是说，通过这种函数式
+的编程，比较容易表达出思考的过程。
+
+### partial partialRight flip placeholder
+partial 和 partialRight 用curry代替了，而flip的作用是交换函数的参数位置。
+```
+// 下面这个参数year在前，book在后
+const isTheYear = R.curry((year, book) => book.year === year);
+// curry的时候进去的是第一个参数
+const isPublishedYear = isTheYear(year);
+
+// 如果写成这样，curry后进去的是book了
+// const isTheYear = R.curry((book, year) => book.year === year);
+// 这个时候先用下flip
+// const isPublishedYear = flip(isTheYear)(year);
+
+// 用placeholder站位(两个下划线)，把这个参数留到最后一个（只能用于curry过的函数）
+// 实现上面flip的效果
+const isPublishedYear = isTheYear(__, year);
+```
+
+第三章结束，原来后面他用的是pipe，而我用的是compose。
+
+## 4 Declarative Programming
+直译过来是宣告式编程，其实就是编程的时候说我想做什么，有点像sql语句。
+### 函数式中的运算符
+简单的说就是用函数来代替命令中的数学：+，-，\*，/；
+流程控制：if-then-else ；比较：===, >, <, etc；逻辑运算：&&, ||, !等操作。
+
+### Arithmetic
+* add +
+* subtract -
+* multiply *
+* divide /
+* inc ++
+* dec --
+
+### Comparison
+* equals ==
+* gt  >
+* lt <
+* gte >=
+* lte <=
+* identical ===
+```
+var o = {};
+R.identical(o, o); //=> true
+R.identical(1, 1); //=> true
+R.identical(1, '1'); //=> false
+R.identical([], []); //=> false
+R.identical(0, -0); //=> false
+R.identical(NaN, NaN); //=> true
+```
+
+* isEmpty `str === ''`
+* isNil `arr.length === 0`
+
+### logic
+应用于函数：
+* both  &&
+* either ||
+* complement !
+
+应用于变量
+* and
+* or
+* not
+* defaultTo
+```
+const settings = {
+  lineWidth: null,
+}
+const lineWidth = defaultTo(80, settings.lineWidth)
+
+// 可以避免下面的参数为零的问题
+const lineWidth = settings.lineWidth || 80
+
+// 这样写也是有问题的
+const lineWidth = R.or(settings.lineWidth 80);
+```
+
+### Conditionals
+ifElse 用于函数
+```
+const forever21 = age => age >= 21 ? 21 : age + 1
+
+// 重写一下，把三元变成函数，再用上ifElse
+const age = 1;
+const forever21 = ifElse(gte(__, 21), () => 21, inc)
+forever21(age);
+```
+可以看出来ifElse第一个参数是条件，第二个是条件true时的执行函数，第二个是false时。
+
+### Constants
+#### 常数  always 本身是一个函数
+返回一个函数，这个函数返回给定的参数
+```
+// 上面的可以改成：
+const forever21 = ifElse(gte(__, 21), always(21), inc)
+```
+
+#### T(true) F(false)
+```
+// 可以这样
+T() // 返回true
+F() // 返回false
+```
+
+#### identity
+返回输入的值
+
+`const alwaysDriveAge = ifElse(lt(__, 16), always(16), identity)`
+
+#### when unless
+如果ifElse中有一个分支是identity, 如上边的例子，则可以用 when， identity成为默认项
+`const alwaysDriveAge = when(lt(__, 16), always(16))`
+
+如果第一个分支是identity，则用unless
+`const alwaysDriveAge = unless(gt(__, 16), always(16))`
+
+还有一个cond，作为switch用，因为基本没用到，略过。
+
+#### 第四章总结下来，就是函数式的各种运算符，他们运算的对象是函数而已，这是跟普通运算符的区别
+
+
+## 第五章 Pointfree Style
+pointfree 也就是数据作为最后的参数传入，因为以前学过，所以上面我已经提前用了。
+
+总结后还要加入一条
+1. Put the data last
+2. Curry all the things
