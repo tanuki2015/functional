@@ -332,6 +332,27 @@ F() // 返回false
 ## 第五章 Pointfree Style
 pointfree 也就是数据作为最后的参数传入，因为以前学过，所以上面我已经提前用了。
 
-总结后还要加入一条
+总结后还要加入一条：
+
 1. Put the data last
 2. Curry all the things
+
+## 第六章 immutability and Objects
+prop 用于读取对象中的属性
+```
+// 下面对象属性的操作是命令式实现，他的问题是两个
+// 1.显式操作数据person，不符合pointfree。
+// 2.本来想说看起来不清晰，但其实我觉得这种显式的传入person更加清晰，否则还得去想想pointfree隐藏的是啥？
+const wasBornInCountry = person => person.birthCountry === OUR_COUNTRY
+const wasNaturalized = person => Boolean(person.naturalizationDate)
+const isOver18 = person => person.age >= 18
+
+const isCitizen = either(wasBornInCountry, wasNaturalized)
+const isEligibleToVote = both(isOver18, isCitizen)
+
+// pointfree样式
+const wasBornInCountry = compose(equals(OUR_COUNTRY), prop('birthCountry'))
+const wasNaturalized = compose(Boolean, prop('naturalizationDate'))
+const isOver18 = compose(gte(__, 18), prop('age'))
+```
+但是使用prop等一系列的函数式的对象操作的好处，在于immutability,他不会改变原对象，而是会返回一个新拷贝，这有利于保持函数的纯度。
